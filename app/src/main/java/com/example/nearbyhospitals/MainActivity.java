@@ -7,7 +7,6 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
@@ -35,17 +34,19 @@ import com.huawei.hms.site.api.SearchResultListener;
 import com.huawei.hms.site.api.SearchService;
 import com.huawei.hms.site.api.SearchServiceFactory;
 import com.huawei.hms.site.api.model.Coordinate;
-import com.huawei.hms.site.api.model.LocationType;
+import com.huawei.hms.site.api.model.HwLocationType;
 import com.huawei.hms.site.api.model.NearbySearchRequest;
 import com.huawei.hms.site.api.model.NearbySearchResponse;
 import com.huawei.hms.site.api.model.SearchStatus;
 import com.huawei.hms.site.api.model.Site;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "HospitalLocationActivity";
+    private static final String TAG = "HospitalLocation";
     private double longtitude, latitude;
     private TextView distanceID, yourLatitude, yourLongtitude;
     private ImageView searchHospitalImage;
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> hospitalLat;
     private ArrayList<String> hospitalLong;
     private LocationAvailability locationAvailability;
+    int desiredRadius;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,8 +84,12 @@ public class MainActivity extends AppCompatActivity {
                 if (distanceID.getText().toString().equals("")) {
                     Toast.makeText(getApplication(), "Please enter a value", Toast.LENGTH_SHORT).show();
                 } else {
-                    int desiredRadius = Integer.parseInt(distanceID.getText().toString()) * 1000; //Convert the value to the int
-                    findHospitalsBySiteKit(desiredRadius); // Use Site Kit
+                    desiredRadius = Integer.parseInt(distanceID.getText().toString()) * 1000; //Convert the value to the int
+                   /* try {
+                        findHospitalsBySiteKit(desiredRadius); // Use Site Kit
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }*/
                     sendHospitalData(); // Show on Map Kit
                 }
             }
@@ -109,8 +115,8 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this,
                     "android.permission.ACCESS_BACKGROUND_LOCATION") != PackageManager.PERMISSION_GRANTED) {
-                String[] strings = {android.Manifest.permission.ACCESS_FINE_LOCATION,
-                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                String[] strings = {Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
                         "android.permission.ACCESS_BACKGROUND_LOCATION"};
                 ActivityCompat.requestPermissions(this, strings, 2);
             }
@@ -150,15 +156,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 if (locationResult != null) {
-                    List<Location> locations = locationResult.getLocations();
-                    if (!locations.isEmpty()) {
-                        for (Location location : locations) {
-                            longtitude = location.getLongitude(); // Get your Latitude
-                            latitude = location.getLatitude(); // Get your Longitude
-                            yourLatitude.setText(latitude + ""); // Set your Latitude
-                            yourLongtitude.setText(longtitude + ""); // Set your Longitude
-                        }
-                    }
+                    latitude = locationResult.getLastHWLocation().getLongitude(); // Get your Latitude
+                    longtitude = locationResult.getLastHWLocation().getLatitude();
+                    yourLatitude.setText(latitude + "");
+                    yourLongtitude.setText(longtitude + "");
+                    Log.v(TAG , "current loc" +longtitude +longtitude);
                 }
             }
 
@@ -230,15 +232,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void findHospitalsBySiteKit(int desiredRadius){
-        searchService = SearchServiceFactory.create(this, "API key"); //Create searchService Object
-        final Coordinate location = new Coordinate(latitude,longtitude); // User location
+    private void findHospitalsBySiteKit (int desiredRadius) throws UnsupportedEncodingException {
+        searchService = SearchServiceFactory.create(MainActivity.this, URLEncoder.encode("CwEAAAAAvU+dQW4g++kGhO9W27Myv7u+Gb4JmVOd3MQkKfJdCfa8QnQnBcXASUnyRiOIlBNTAiCeon8DMyt06TyrfH/lhfmlF3w=", "UTF-8")); //Create searchService Object
+        Coordinate location = new Coordinate(latitude,longtitude); // User location
         NearbySearchRequest nearbySearchRequest = new NearbySearchRequest(); // Create a nearbySearchRequest
         nearbySearchRequest.setLocation(location); // Set user location
         nearbySearchRequest.setQuery("Hospital"); // Set query hospital
-        nearbySearchRequest.setPageSize(20);
         nearbySearchRequest.setRadius(desiredRadius);
-        nearbySearchRequest.setPoiType(LocationType.HOSPITAL);
+        nearbySearchRequest.setPageIndex(1);
+        nearbySearchRequest.setPageSize(20);
+        nearbySearchRequest.setHwPoiType(HwLocationType.GENERAL_HOSPITAL);
+        nearbySearchRequest.setStrictBounds(false);
+        //nearbySearchRequest.setPoiType(LocationType.HOSPITAL);
 
         SearchResultListener<NearbySearchResponse> resultListener = new SearchResultListener<NearbySearchResponse>() {
             // Return search results upon a successful search.
@@ -252,6 +257,7 @@ public class MainActivity extends AppCompatActivity {
                     hospitalTitle.add(site.getName());
                     hospitalLat.add(site.getLocation().getLat()+""); //Converting the values to String
                     hospitalLong.add(site.getLocation().getLng()+""); //Converting the values to String
+                    Toast.makeText(MainActivity.this , "siteId: '%s', name: %s\r\n" +site.getSiteId() +site.getName(),Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -266,16 +272,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendHospitalData() {
         Intent intent = new Intent(MainActivity.this, MapActivity.class);
-        intent.putExtra("locationClicked", false);
+        intent.putExtra("radius", false);
         intent.putExtra("lat", latitude);
         intent.putExtra("long", longtitude);
-        intent.putStringArrayListExtra("hospitalTitle", hospitalTitle);
+      /*  intent.putStringArrayListExtra("hospitalTitle", hospitalTitle);
         intent.putStringArrayListExtra("hospitalLat", hospitalLat);
-        intent.putStringArrayListExtra("hospitalLong", hospitalLong);
+        intent.putStringArrayListExtra("hospitalLong", hospitalLong);*/
         startActivity(intent);
         //Clear lists for future searchs.
-        hospitalTitle.clear();
+      /*  hospitalTitle.clear();
         hospitalLat.clear();
-        hospitalLong.clear();
+        hospitalLong.clear();*/
     }
 }
