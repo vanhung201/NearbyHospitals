@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendHospitalData() {
         Intent intent = new Intent(MainActivity.this, MapActivity.class);
-        intent.putExtra("radius", false);
+        intent.putExtra("radius", desiredRadius);
         intent.putExtra("lat", latitude);
         intent.putExtra("long", longtitude);
       /*  intent.putStringArrayListExtra("hospitalTitle", hospitalTitle);

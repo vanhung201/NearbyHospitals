@@ -38,11 +38,21 @@ public class MapActivity extends Activity implements OnMapReadyCallback {
     MarkerOptions options;
     HuaweiMap hmap;
     ArrayList<Site> marray = new ArrayList();
+    private double mLatitude, mLongitude;
+    public int radius;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        mLatitude = getIntent().getExtras().getDouble("lat");
+        mLongitude = getIntent().getExtras().getDouble("long");
+        radius = getIntent().getExtras().getInt("radius");
+
+        Log.v("Nithya", "checked " + mLatitude);
+        Log.v("Nithya", "checked " + mLongitude);
+        Log.v("Nithya", "checked " + radius);
 
         switchbutton = (Switch) findViewById(R.id.swith_hosp_pharmcy);
         mMapView = findViewById(R.id.mapview_mapviewdemo);
@@ -51,6 +61,7 @@ public class MapActivity extends Activity implements OnMapReadyCallback {
         if (savedInstanceState != null) {
             mapViewBundle = savedInstanceState.getBundle("MapViewBundleKey");
         }
+
         mMapView.onCreate(mapViewBundle);
         mMapView.getMapAsync(this);
         switchbutton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -145,11 +156,11 @@ public class MapActivity extends Activity implements OnMapReadyCallback {
 
         // Create a request body.
         NearbySearchRequest request = new NearbySearchRequest();
-        Coordinate location = new Coordinate(13.013627, 77.673649); // HEre i have hardcoded my location , u need to set ur location that u get from location kit here
+        Coordinate location = new Coordinate(mLatitude, mLongitude); // HEre i have hardcoded my location , u need to set ur location that u get from location kit here
         request.setLocation(location);
         request.setQuery(query);
-        request.setRadius(1000);
-        if (query.equals("Hosptial")) {
+        request.setRadius(radius);
+        if (query.equals("Hospital")) {
             request.setHwPoiType(HwLocationType.GENERAL_HOSPITAL);
         }
         if (query.equals("Pharmacy")) {
@@ -192,11 +203,11 @@ public class MapActivity extends Activity implements OnMapReadyCallback {
     private void addmarker(ArrayList<Site> poiarray) {
         hmap.clear();
         hmap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(13.013627, 77.673649), 8)); // Here again pass the  lat and lon value that i got from  location kit
+                new LatLng(mLatitude, mLongitude), 8)); // Here again pass the  lat and lon value that i got from  location kit
 
         for (int m = 0; m < poiarray.size(); m++) {
             Log.v("Nithya", "Site name" + poiarray.get(m).name + "address" + poiarray.get(m).formatAddress + "loc--lat" + poiarray.get(m).getLocation().getLat() + "loc--lon" + poiarray.get(m).getLocation().getLng());
-            if (poiarray.get(m).poi.equals("Hosptial")) {
+            if (poiarray.get(m).poi.equals("Hospital")) {
 
                 options = new MarkerOptions().position(new LatLng(poiarray.get(m).getLocation().getLat()
                         , poiarray.get(m).getLocation().getLng())).icon(BitmapDescriptorFactory.fromResource(R.drawable.hospitalicon)).title(poiarray.get(m).name).clusterable(true);
