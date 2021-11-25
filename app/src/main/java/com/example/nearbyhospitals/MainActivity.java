@@ -2,6 +2,9 @@ package com.example.nearbyhospitals;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Intent;
@@ -16,6 +19,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.nearbyhospitals.Adapter.HospitalAdapter;
+import com.example.nearbyhospitals.model.Hospital;
 import com.huawei.hmf.tasks.OnFailureListener;
 import com.huawei.hmf.tasks.OnSuccessListener;
 import com.huawei.hms.common.ApiException;
@@ -46,6 +51,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    private RecyclerView rcvHos;
+    private List<Hospital> hospitalList;
+    private HospitalAdapter hospitalAdapter;
     private static final String TAG = "HospitalLocation";
     private double longtitude, latitude;
     private TextView distanceID, yourLatitude, yourLongtitude;
@@ -76,7 +84,6 @@ public class MainActivity extends AppCompatActivity {
 
         checkPermissions();
         getLocationData();
-
         searchHospitalImage = findViewById(R.id.searchHospitalImage);
         searchHospitalImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,10 +97,33 @@ public class MainActivity extends AppCompatActivity {
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }*/
-                    sendHospitalData(); // Show on Map Kit
+//                    List Name Hospital
+                    listName();
+
+
+
+
+//                    sendHospitalData(); // Show on Map Kit
                 }
             }
         });
+    }
+
+    private void listName() {
+        rcvHos = (RecyclerView) findViewById(R.id.rcv_Hospital);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        rcvHos.setLayoutManager(linearLayoutManager);
+
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        rcvHos.addItemDecoration(dividerItemDecoration);
+
+        hospitalList = new ArrayList<>();
+        hospitalAdapter = new HospitalAdapter(hospitalList, new HospitalAdapter.iClickListener() {
+            @Override
+            public void onClickCheckLocation(Hospital hos) {
+                sendHospitalData();
+            }
+        })
     }
 
     private void checkPermissions() {

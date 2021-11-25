@@ -20,10 +20,10 @@ android {
 
     signingConfigs {
         config {
-            keyAlias 'NearbyHospital'
-            storeFile file('D:\\LAPTRINHANDROID\\NearbyHospitals\\app\\NearbyHospital.jks')
-            storePassword '20032001'
-            keyPassword '20032001'
+            storeFile file('D:\\HospitalLine\\NearbyHospitals\\app\\ShinHospital.jks')
+            storePassword '030601'
+            keyPassword '030601'
+            keyAlias 'shin'
         }
     }
     buildTypes {
@@ -54,4 +54,8 @@ dependencies {
     implementation 'com.huawei.hms:location:5.0.4.300'
     implementation 'com.huawei.hms:maps:5.0.5.301'
     implementation 'com.huawei.hms:site:5.0.5.301'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.0.1'
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'com.google.android.material:material:1.1.0'
 }
